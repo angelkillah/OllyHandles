@@ -1,7 +1,7 @@
 OllyHandles
 ===========
 
-OllyHandles is a plugin for OllyDBG 2, it will show the handles opened by the debugged process. This feature exists in Immunity Debugger but was not available in Olly, that is why I wrote that plugin.
+OllyHandles is a plugin for OllyDBG 2, it will show the handles opened by the debuggee. This feature exists in Immunity Debugger but was not available in Olly, that is why I wrote that plugin.
 
 INSTALL/USE
 ===========
