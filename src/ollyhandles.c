@@ -239,7 +239,7 @@ static int menu_handler(t_table *pt,wchar_t *name,ulong index,int mode) {
 static t_menu mainmenu[] = {
   { L"OllyHandles",
        L"Open handles window",
-       K_NONE, menu_handler, NULL, 0},
+       KK_DIRECT | KK_CTRL | 'L', menu_handler, NULL, 0},
   { NULL, NULL, K_NONE, NULL, NULL, 0 }
 };
 
