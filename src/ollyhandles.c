@@ -100,7 +100,7 @@ long handletable_proc(t_table *pt, HWND hw, UINT msg, WPARAM wp, LPARAM lp)
 ///////////////////////////////// PAYLOAD //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-void wrapper_ZwQuerySystemInformation(PSYSTEM_HANDLE_INFORMATION *pSystemHandleInformation)
+BOOL wrapper_ZwQuerySystemInformation(PSYSTEM_HANDLE_INFORMATION *pSystemHandleInformation)
 {
 	DWORD dwSize = 0;
 	ZWQUERYSYSTEMINFORMATION ZwQuerySystemInformation = NULL;
@@ -114,11 +114,10 @@ void wrapper_ZwQuerySystemInformation(PSYSTEM_HANDLE_INFORMATION *pSystemHandleI
 	{	
 		free(*pSystemHandleInformation);
 		*pSystemHandleInformation = (PSYSTEM_HANDLE_INFORMATION)malloc(dwSize);
-		if(ZwQuerySystemInformation(SystemHandleInformation, *pSystemHandleInformation, dwSize, &dwSize) != 0)
-			exit(0);
+		return (ZwQuerySystemInformation(SystemHandleInformation, *pSystemHandleInformation, dwSize, &dwSize) == 0);
 	}
-	else
-		exit(0);
+	
+    return FALSE;
 }
 
 // retrieve the child PID (the debugged process)	
@@ -164,10 +163,14 @@ void payload()
 	DWORD dwSize = 0;
 	DWORD i = 0;
 
+
+    if (!(wrapper_ZwQuerySystemInformation (&pSystemHandleInformation))) {
+        return;
+    }
+    
 	/* clear log table */
 	Deletesorteddatarange(&(handletable.sorted), 0x00000000, 0xFFFFFFFF);
 
-	wrapper_ZwQuerySystemInformation(&pSystemHandleInformation);
 	ZwQueryObject = (ZWQUERYOBJECT)GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtQueryObject");
 
 	debugged_pid = get_debugged_pid();
@@ -322,4 +325,32 @@ void ODBG2_Pluginreset(void)
 void ODBG2_Plugindestroy(void)
 {
 	Destroysorteddata(&(handletable.sorted));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// PLUGIN EVENTS /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+void ODBG2_Pluginnotify (int iCode, void *pData, DWORD dwParam1, DWORD dwParam2)
+{
+	UNREFERENCED_PARAMETER(pData);
+	UNREFERENCED_PARAMETER(dwParam1);
+	UNREFERENCED_PARAMETER(dwParam2);
+
+	switch (iCode) {
+        case PN_NEWPROC:
+        case PN_NEWTHR:
+        case PN_PREMOD:
+        case PN_NEWMOD:
+	    case PN_RUN:
+            // Whenever the execution status change, refresh the plugin table
+            if (get_debugged_pid ()) {
+			    payload();
+            }
+		break;
+
+	    default:
+		break;
+	}
 }
