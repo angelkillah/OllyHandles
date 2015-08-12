@@ -151,8 +151,6 @@ void payload()
 {
 	NTSTATUS ret;
 	HANDLE_DATA handledata = {0};
-	HANDLE hProcess;
-	HANDLE hDupHandle;
 	PVOID ObjectNameInfo = NULL;
 	PVOID ObjectTypeInfo = NULL;
 	UNICODE_STRING ObjectName;
@@ -162,7 +160,8 @@ void payload()
 	DWORD debugged_pid = 0;
 	DWORD dwSize = 0;
 	DWORD i = 0;
-
+	HANDLE hProcess;
+	HANDLE hDupHandle;
 
     if (!(wrapper_ZwQuerySystemInformation (&pSystemHandleInformation))) {
         return;
@@ -206,7 +205,9 @@ void payload()
 				
 				swprintf(handledata.wType, TEXTLEN, L"%ls", ObjectType.Buffer);
 				swprintf(handledata.wName, TEXTLEN, L"%ls", ObjectName.Buffer);
-				Addsorteddata(&(handletable.sorted), &handledata);		
+				Addsorteddata(&(handletable.sorted), &handledata);	
+				CloseHandle(hDupHandle);
+				CloseHandle(hProcess);
 			}			
 		}
 	}
@@ -316,6 +317,7 @@ int ODBG2_Plugininit(void)
 
 	return 0;
 }
+
 
 void ODBG2_Pluginreset(void)
 {
